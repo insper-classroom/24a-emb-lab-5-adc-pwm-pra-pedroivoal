@@ -13,9 +13,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define FILTER_SIZE 5
-#define portMAX_DELAY 50
-
 const int X_PIN = 27;
 const int Y_PIN = 26;
 
@@ -29,8 +26,8 @@ typedef struct adc {
 
 
 int converter(int val) {
-    val -= 2048;
     val /= 8;
+    val -= 256;
     if (val < 30 && val > -30) 
         val = 0;
     return val;
@@ -39,17 +36,17 @@ int converter(int val) {
 
 void adc_x_task(void *p) {
     adc_init();
-    adc_gpio_init(X_PIN);
     
     adc_t adc_x;
     adc_x.axis = 0;
-    int delay = 500;
+    int delay = 50;
     while (1)
     {
+        adc_gpio_init(X_PIN);
         adc_select_input(1);
         adc_x.val = converter(adc_read());
-        xQueueSend(xQueueAdc, &adc_x, 1 );
-        printf("X: %d\n", adc_x.val);
+        xQueueSend(xQueueAdc, &adc_x, 0 );
+        // printf("X: %d\n", adc_x.val);
         vTaskDelay(pdMS_TO_TICKS(delay));
     }
 }
@@ -57,17 +54,17 @@ void adc_x_task(void *p) {
 
 void adc_y_task(void *p) {
     adc_init();
-    adc_gpio_init(Y_PIN);
     
     adc_t adc_y;
     adc_y.axis = 1;
-    int delay = 500;
+    int delay = 50;
     while (1)
     {
+        adc_gpio_init(Y_PIN);
         adc_select_input(0);
         adc_y.val = converter(adc_read());
-        xQueueSend(xQueueAdc, &adc_y, 1 );
-        printf("Y: %d\n", adc_y.val);
+        xQueueSend(xQueueAdc, &adc_y, 0 );
+        // printf("Y: %d\n", adc_y.val);
         vTaskDelay(pdMS_TO_TICKS(delay));
     }
 }
@@ -88,7 +85,7 @@ void uart_task(void *p) {
 
     while (1) {
         if (xQueueReceive(xQueueAdc, &data, portMAX_DELAY)) {
-            // write_package(data);
+            write_package(data);
         } else {}
     }
 }
